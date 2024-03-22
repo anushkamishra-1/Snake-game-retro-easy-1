@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Basic Snake HTML Game</title>
+	<meta charset="UTF-8">
+	<style>
+	html, body{
+		height: 100%;
+		margin: 0;
+	}
+
+	body{
+		background: black;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	canvas{
+		border: 1px solid white;
+	}
+	</style>
+</head>
+
+<body>
+	<canvas width="600" height="600" id="game"></canvas>
+	<script>
+	var canvas= document.getElementById('game');
+	var context= canvas.getContext('2d');
+	//canvas width and height, snake x and y, apple x and y
+	//all need to be multiples of grid size
+	//in order for detection collision to work
+	//ex))) 20*30=600
+
+	var grid=16;
+	var count=0;
+
+	var snake={
+		x: 20,
+		y: 20,
+		
+		//snake velocity moves one grid length every frame in 
+		//either x or y direction
+		dx: grid,
+		dy: 0,
+
+		//keeps track of all grid in snake body occupies
+		cells:[],
+
+		//length of snake. it grows when eating apples
+		maxCells: 4
+	};
+
+	var apple={
+		x:300,
+		y:300
+	};
+
+	//get random whole numbers in specific range
+	function getRandomInt(min,max){
+		return Math.floor(Math.random() * (max-min)) + min;
+	}
+
+	//game loop
+	function loop(){
+		requestAnimationFrame(loop);
+
+		//slow game loop to 15fps instead of 60 (60/15=4)
+		if (++count < 4){
+			return;
+		}
+		count=0;
+		context.clearRect(0,0,canvas.width,canvas.height);
+
+		//move snake by its velocity
+		snake.x +=snake.dx;
+		snake.y +=snake.dy;
+
+		//wrap snake position horizontally on edge of screen
+		if(snake.x < 0){
+			snake.x = canvas.width - grid;
+		}
+		else if(snake.x >= canvas.width){
+			snake.x=0;
+		}
+
+		//wrap snake position vertically on edge of screen
+		if(snake.y <0){
+			snake.y = canvas.wdith - grid;
+		}
+		else if(snake.y >= canvas.width){
+			snake.y=0;
+		}
+
+		//keep track of where snake has been
+		//front of array is always head.
+		snake.cells.unshift({
+			x: snake.x,
+			y: snake.y
+		});
+
+		//remove cells as we move away from them
+		if(snake.cells.length > snake.maxCells){
+			snake.cells.pop();
+		}
+
+		//draw apple
+		context.fillStyle='red';
+		context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+		//draw snake one cell at a time
+		context.fillStyle='green';
+		snake.cells.forEach(function(cell, index){
+			//drawing 1 px smaller than the grid creates a grid
+			//effect in snake body to see how long it is
+			context.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+			//snake ate a apple
+			if(cell.x === apple.x && cell.y === apple.y){
+				snake.maxCells++;
+
+				//canvas is 600x600 which is 30x30 grids
+				apple.x = getRandomInt(0,30) * grid;
+				apple.y = getRandomInt(0,30) * grid;
+			}
+ 			
+			//check collision with all cells after this
+			//modified bubble sort
+			for(var i=index + 1; i<snake.cells.length; i++){
+				//snake occupies same space as body part
+				//reset game
+				if(cell.x === snake.cells[i].x && cell.y === snake.cells[i].y){
+					snake.x=160;
+					snake.y=160;
+					snake.cells=[];
+					snake.maxCells=4;
+					snake.dx=grid;
+					snake.dy=0;
+					apple.x=getRandonInt(0,30)*grid;
+					apple.y=getRandomInt(0,30)*grid;
+				}
+			}
+		});
+	}
+
+	//listen to keyboard events to move snake
+	document.addEventListener('keydown', function(e){
+		// prevent snake from backtracking on itself 
+		//by checking that it's
+		// not already moving on the same axis 
+		//(pressing left while moving
+  		// left won't do anything, 
+		//and pressing right while moving left
+  		// shouldn't let you collide with your own body)
+
+		//left arrow key
+		if(e.which === 37 && snake.dx === 0){
+			snake.dx = -grid;
+			snake.dy=0;
+		}
+
+		//up arrow key
+		if(e.which === 38 && snake.dy === 0){
+			snake.dy = -grid;
+			snake.dx=0;
+		}
+
+		//right arrow key
+		if(e.which === 39 && snake.dx === 0){
+			snake.dx = grid;
+			snake.dy=0;
+
+		//down arrow key
+		if(e.which === 40 && snake.dy === 0){
+			snake.dy = grid;
+			snake.dx = 0;
+		}
+	});
+
+	///start the game
+	requestAnimationFrame(loop);
+	</script>
+</body>
+</html>
+				
